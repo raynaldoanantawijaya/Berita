@@ -27,11 +27,28 @@ const verifyCache = (req, res, next) => {
     }
 };
 
-const SERVICES = {
-    'berita-indo': process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/berita-indo` : 'http://localhost:3000',
-    'rss': process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/rss` : 'http://localhost:3002',
-    'cnn': process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/cnn-api` : 'http://localhost:5001',
-    'detik': process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/detik` : 'http://localhost:5002'
+const getServiceUrl = (service, req) => {
+    if (process.env.VERCEL_URL) {
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        const host = req.headers.host;
+        const baseUrl = `${protocol}://${host}`;
+
+        switch (service) {
+            case 'berita-indo': return `${baseUrl}/berita-indo`;
+            case 'rss': return `${baseUrl}/rss`;
+            case 'cnn': return `${baseUrl}/cnn-api`;
+            case 'detik': return `${baseUrl}/detik`;
+            default: return baseUrl;
+        }
+    } else {
+        switch (service) {
+            case 'berita-indo': return 'http://localhost:3000';
+            case 'rss': return 'http://localhost:3002';
+            case 'cnn': return 'http://localhost:5001';
+            case 'detik': return 'http://localhost:5002';
+            default: return 'http://localhost:4000';
+        }
+    }
 };
 
 // --- HELPER: Standardization ---
@@ -78,8 +95,8 @@ app.get('/api/search', verifyCache, async (req, res) => {
     // Fallback/Fault Tolerance is built-in via Promise.allSettled
     try {
         const [detikReq, cnnReq] = await Promise.allSettled([
-            axios.get(`${SERVICES.detik}/search?q=${query}`),
-            axios.get(`${SERVICES.cnn}/search/?q=${query}`)
+            axios.get(`${getServiceUrl('detik', req)}/search?q=${query}`),
+            axios.get(`${getServiceUrl('cnn', req)}/search/?q=${query}`)
         ]);
 
         if (detikReq.status === 'fulfilled' && detikReq.value.data.data) {
@@ -163,7 +180,7 @@ app.get('/api/category/:name', verifyCache, async (req, res) => {
     // naturally acts as the fallback because it's a separate request in the batch.
 
     const requests = sources.map(src => {
-        const baseUrl = SERVICES[src.service];
+        const baseUrl = getServiceUrl(src.service, req);
         return axios.get(`${baseUrl}${src.path}`)
             .then(resp => ({ status: 'fulfilled', source: src.source, data: resp.data }))
             .catch(err => ({ status: 'rejected', source: src.source, error: err.message, url: `${baseUrl}${src.path}` }));
@@ -220,19 +237,19 @@ const proxyRequest = async (serviceUrl, req, res) => {
     }
 };
 
-app.use('/berita-indo', (req, res) => proxyRequest(SERVICES['berita-indo'], req, res));
-app.use('/rss', (req, res) => proxyRequest(SERVICES['rss'], req, res));
-app.use('/cnn-api', (req, res) => proxyRequest(SERVICES['cnn'], req, res));
+app.use('/berita-indo', (req, res) => proxyRequest(getServiceUrl('berita-indo', req), req, res));
+app.use('/rss', (req, res) => proxyRequest(getServiceUrl('rss', req), req, res));
+app.use('/cnn-api', (req, res) => proxyRequest(getServiceUrl('cnn', req), req, res));
 app.use('/cnn-detail', (req, res) => {
     req.url = '/detail/';
     // No cache here to ensure fresh token/scraping if needed, 
     // but could add verifyCache if stuck.
-    proxyRequest(SERVICES['cnn'], req, res);
+    proxyRequest(getServiceUrl('cnn', req), req, res);
 });
-app.use('/detik', (req, res) => proxyRequest(SERVICES['detik'], req, res));
+app.use('/detik', (req, res) => proxyRequest(getServiceUrl('detik', req), req, res));
 app.use('/detik-detail', (req, res) => {
     req.url = '/detail';
-    proxyRequest(SERVICES['detik'], req, res);
+    proxyRequest(getServiceUrl('detik', req), req, res);
 });
 
 app.get('/', (req, res) => {
