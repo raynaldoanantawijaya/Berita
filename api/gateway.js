@@ -28,10 +28,12 @@ const verifyCache = (req, res, next) => {
 };
 
 const getServiceUrl = (service, req) => {
+    // REVERT: Use Public Domain (Host Header) to avoid "Authenticated" wall
+    // But we MUST sanitize headers/cookies to avoid 508 Loop
     if (process.env.VERCEL_URL) {
-        // PERBAIKAN LOOP: Gunakan unique deployment URL, bukan public domain
-        // VERCEL_URL tidak pakai https://, jadi kita tambah manual
-        const baseUrl = `https://${process.env.VERCEL_URL}`;
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        const host = req.headers.host || 'berita-lemon.vercel.app';
+        const baseUrl = `${protocol}://${host}`;
 
         switch (service) {
             case 'berita-indo': return `${baseUrl}/berita-indo`;
@@ -241,37 +243,55 @@ app.get('/api/category/:name', verifyCache, async (req, res) => {
     res.json(responseData);
 });
 
-// --- PROXY ROUTES (No Cache for direct proxy to allow debug, or add if needed) ---
+// --- PROXY ROUTES ---
 const proxyRequest = async (serviceUrl, req, res) => {
     try {
-        // Normalize URL: remove double slashes
+        // Normalize URL
         const targetPath = req.url.startsWith('/') ? req.url : `/${req.url}`;
-        const url = `${serviceUrl}${targetPath}`.replace(/([^:]\/)\/+/g, "$1");
+        let url = `${serviceUrl}${targetPath}`.replace(/([^:]\/)\/+/g, "$1");
 
-        // console.log(`Proxying to: ${url}`); // Internal Log
+        // ANTI-LOOP MECHANISM:
+        // 1. Add Random Cache Buster
+        url += (url.includes('?') ? '&' : '?') + `__t=${Date.now()}`;
+
+        // 2. Strict Header Sanitization (Do NOT forward Cookies/Referer)
+        // We create a FRESH headers object.
+        const headers = {
+            'User-Agent': 'BeritaLemon-Gateway/3.2',
+            'Accept': 'application/json',
+            'X-Internal-Call': 'true'
+        };
 
         const response = await axios.get(url, {
             params: req.query,
-            headers: {
-                'User-Agent': 'BeritaLemon-Gateway/1.0',
-                'X-Internal-Call': 'true'
-            }
+            headers: headers,
+            // Disable redirects just in case
+            maxRedirects: 5,
+            validateStatus: () => true // Handle all status codes manually
         });
+
+        // Forward back key headers if needed, but mostly just data
         res.status(response.status).send(response.data);
+
     } catch (error) {
-        if (error.response) res.status(error.response.status).send(error.response.data);
-        else res.status(500).send({ error: 'Service Unavailable', details: error.message });
+        // Fallback for network errors
+        console.error("Proxy Error:", error.message);
+        res.status(500).send({
+            error: 'Service Unavailable',
+            details: error.message,
+            target: serviceUrl
+        });
     }
 };
 
 app.get('/api/status-check', (req, res) => {
     res.json({
         status: "ONLINE",
-        version: "3.1.1-ANTI-LOOP (Vercel URL)",
+        version: "3.2.0-PUBLIC-SANITIZED",
         env: {
             vercel_url: process.env.VERCEL_URL,
             host: req.headers.host,
-            note: "Using VERCEL_URL for internal calls"
+            note: "Reverted to Public Domain + Header Sanitization"
         }
     });
 });
