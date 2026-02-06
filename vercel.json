@@ -1,39 +1,21 @@
 {
     "version": 2,
-    "functions": {
-        "cnnindonesia-news-api/main.py": {
-            "runtime": "@vercel/python"
-        },
-        "detiknews_api/main.py": {
-            "runtime": "@vercel/python"
-        },
-        "gateway/server.js": {
-            "runtime": "@vercel/node"
-        },
-        "api-berita-indonesia/src/server.js": {
-            "runtime": "@vercel/node"
-        }
-    },
     "rewrites": [
         {
             "source": "/cnn-api/:path*",
-            "destination": "/cnnindonesia-news-api/main.py"
+            "destination": "/api/cnn.py"
         },
         {
             "source": "/detik/:path*",
-            "destination": "/detiknews_api/main.py"
+            "destination": "/api/detik.py"
         },
         {
             "source": "/rss/:path*",
-            "destination": "/api-berita-indonesia/src/server.js"
-        },
-        {
-            "source": "/berita-indo/:path*",
-            "destination": "/berita-indo-api/package.json"
+            "destination": "/api/rss.js"
         },
         {
             "source": "/api/:path*",
-            "destination": "/gateway/server.js"
+            "destination": "/api/gateway.js"
         },
         {
             "source": "/",
