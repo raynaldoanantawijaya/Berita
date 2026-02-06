@@ -183,7 +183,13 @@ app.get('/api/category/:name', verifyCache, async (req, res) => {
         const baseUrl = getServiceUrl(src.service, req);
         return axios.get(`${baseUrl}${src.path}`)
             .then(resp => ({ status: 'fulfilled', source: src.source, data: resp.data }))
-            .catch(err => ({ status: 'rejected', source: src.source, error: err.message, url: `${baseUrl}${src.path}` }));
+            .catch(err => ({
+                status: 'rejected',
+                source: src.source,
+                error: err.message,
+                url: `${baseUrl}${src.path}`,
+                error_obj: err
+            }));
     });
 
     const responses = await Promise.all(requests);
@@ -216,7 +222,9 @@ app.get('/api/category/:name', verifyCache, async (req, res) => {
         responseData.debug_errors = responses.filter(r => r.status === 'rejected').map(r => ({
             source: r.source,
             error: r.error,
-            url: r.url
+            url: r.url,
+            // Try to extract response body if available (e.g. from axios error)
+            response_data: r.error_obj?.response?.data || "No response data"
         }));
         // DO NOT CACHE ERRORS/EMPTY
     } else {
