@@ -29,9 +29,9 @@ const verifyCache = (req, res, next) => {
 
 const getServiceUrl = (service, req) => {
     if (process.env.VERCEL_URL) {
-        const protocol = req.headers['x-forwarded-proto'] || 'https';
-        const host = req.headers.host;
-        const baseUrl = `${protocol}://${host}`;
+        // PERBAIKAN LOOP: Gunakan unique deployment URL, bukan public domain
+        // VERCEL_URL tidak pakai https://, jadi kita tambah manual
+        const baseUrl = `https://${process.env.VERCEL_URL}`;
 
         switch (service) {
             case 'berita-indo': return `${baseUrl}/berita-indo`;
@@ -267,10 +267,11 @@ const proxyRequest = async (serviceUrl, req, res) => {
 app.get('/api/status-check', (req, res) => {
     res.json({
         status: "ONLINE",
-        version: "3.1.0-FIX-LOOP",
+        version: "3.1.1-ANTI-LOOP (Vercel URL)",
         env: {
             vercel_url: process.env.VERCEL_URL,
-            host: req.headers.host
+            host: req.headers.host,
+            note: "Using VERCEL_URL for internal calls"
         }
     });
 });
