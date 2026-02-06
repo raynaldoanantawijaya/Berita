@@ -250,14 +250,14 @@ app.use('/berita-indo', (req, res) => proxyRequest(getServiceUrl('berita-indo', 
 app.use('/rss', (req, res) => proxyRequest(getServiceUrl('rss', req), req, res));
 app.use('/cnn-api', (req, res) => proxyRequest(getServiceUrl('cnn', req), req, res));
 app.use('/cnn-detail', (req, res) => {
-    req.url = '/detail/';
-    // No cache here to ensure fresh token/scraping if needed, 
-    // but could add verifyCache if stuck.
+    // Append the slug (req.url) to '/detail'
+    // req.url comes in as '/teknologi/...' (stripped of /cnn-detail)
+    req.url = `/detail${req.url}`;
     proxyRequest(getServiceUrl('cnn', req), req, res);
 });
 app.use('/detik', (req, res) => proxyRequest(getServiceUrl('detik', req), req, res));
 app.use('/detik-detail', (req, res) => {
-    req.url = '/detail';
+    req.url = `/detail${req.url}`;
     proxyRequest(getServiceUrl('detik', req), req, res);
 });
 
