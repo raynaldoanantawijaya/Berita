@@ -1,5 +1,27 @@
 {
     "version": 2,
+    "builds": [
+        {
+            "src": "gateway/server.js",
+            "use": "@vercel/node"
+        },
+        {
+            "src": "api-berita-indonesia/src/server.js",
+            "use": "@vercel/node"
+        },
+        {
+            "src": "cnnindonesia-news-api/main.py",
+            "use": "@vercel/python"
+        },
+        {
+            "src": "detiknews_api/main.py",
+            "use": "@vercel/python"
+        },
+        {
+            "src": "berita-indo-api/package.json",
+            "use": "@vercel/next"
+        }
+    ],
     "rewrites": [
         {
             "source": "/cnn-api/(.*)",
@@ -23,7 +45,7 @@
         },
         {
             "source": "/",
-            "destination": "/gateway/server.js"
+            "destination": "/public/index.html"
         }
     ]
 }

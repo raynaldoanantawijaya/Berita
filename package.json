@@ -3,10 +3,16 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "build": "echo 'No build command for root'"
+        "build": "echo 'Building...'"
     },
     "dependencies": {
         "@vercel/node": "^3.0.0",
-        "@vercel/python": "^4.0.0"
+        "@vercel/python": "^4.0.0",
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "axios": "^1.6.2",
+        "compression": "^1.7.4",
+        "node-cache": "^5.1.2",
+        "rss-parser": "^3.13.0"
     }
 }
