@@ -244,14 +244,37 @@ app.get('/api/category/:name', verifyCache, async (req, res) => {
 // --- PROXY ROUTES (No Cache for direct proxy to allow debug, or add if needed) ---
 const proxyRequest = async (serviceUrl, req, res) => {
     try {
-        const url = `${serviceUrl}${req.path}`;
-        const response = await axios.get(url, { params: req.query });
+        // Normalize URL: remove double slashes
+        const targetPath = req.url.startsWith('/') ? req.url : `/${req.url}`;
+        const url = `${serviceUrl}${targetPath}`.replace(/([^:]\/)\/+/g, "$1");
+
+        // console.log(`Proxying to: ${url}`); // Internal Log
+
+        const response = await axios.get(url, {
+            params: req.query,
+            headers: {
+                'User-Agent': 'BeritaLemon-Gateway/1.0',
+                'X-Internal-Call': 'true'
+            }
+        });
         res.status(response.status).send(response.data);
     } catch (error) {
         if (error.response) res.status(error.response.status).send(error.response.data);
-        else res.status(500).send({ error: 'Service Unavailable' });
+        else res.status(500).send({ error: 'Service Unavailable', details: error.message });
     }
 };
+
+app.get('/api/debug-env', (req, res) => {
+    res.json({
+        vercel_url: process.env.VERCEL_URL,
+        host_header: req.headers.host,
+        protocol: req.headers['x-forwarded-proto'],
+        service_urls: {
+            cnn: getServiceUrl('cnn', req),
+            detik: getServiceUrl('detik', req)
+        }
+    });
+});
 
 app.use('/berita-indo', (req, res) => proxyRequest(getServiceUrl('berita-indo', req), req, res));
 app.use('/rss', (req, res) => proxyRequest(getServiceUrl('rss', req), req, res));
