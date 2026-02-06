@@ -19,19 +19,29 @@ try:
     CORS(app)
 
     # --- Vercel Middleware: Strip Prefix ---
+    # We now handle both /cnn-api (default) and /cnn-detail (direct access)
     class PrefixMiddleware(object):
         def __init__(self, app, prefix=''):
             self.app = app
             self.prefix = prefix
         def __call__(self, environ, start_response):
-            if environ['PATH_INFO'].startswith(self.prefix):
-                environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
-                environ['SCRIPT_NAME'] = self.prefix
-                return self.app(environ, start_response)
-            else:
-                return self.app(environ, start_response)
+            path = environ['PATH_INFO']
+            # If accessing via /cnn-detail, we don't strip passing to app, 
+            # but we need to ensure app route matches.
+            # actually app.route('/detail/<path:slug>') matches /detail/...
+            # so if path is /cnn-detail/teknologi... we want it to become /detail/teknologi...
+            
+            if path.startswith('/cnn-api'):
+                environ['PATH_INFO'] = path[len('/cnn-api'):]
+                environ['SCRIPT_NAME'] = '/cnn-api'
+            elif path.startswith('/cnn-detail'):
+                # Map /cnn-detail/slug -> /detail/slug
+                environ['PATH_INFO'] = path.replace('/cnn-detail', '/detail', 1)
+                environ['SCRIPT_NAME'] = '/cnn-detail'
+            
+            return self.app(environ, start_response)
 
-    app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/cnn-api')
+    app.wsgi_app = PrefixMiddleware(app.wsgi_app) # No fixed prefix, logic inside
     # ---------------------------------------
 
     # Import Controller logic from src
