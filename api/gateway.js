@@ -264,14 +264,13 @@ const proxyRequest = async (serviceUrl, req, res) => {
     }
 };
 
-app.get('/api/debug-env', (req, res) => {
+app.get('/api/status-check', (req, res) => {
     res.json({
-        vercel_url: process.env.VERCEL_URL,
-        host_header: req.headers.host,
-        protocol: req.headers['x-forwarded-proto'],
-        service_urls: {
-            cnn: getServiceUrl('cnn', req),
-            detik: getServiceUrl('detik', req)
+        status: "ONLINE",
+        version: "3.1.0-FIX-LOOP",
+        env: {
+            vercel_url: process.env.VERCEL_URL,
+            host: req.headers.host
         }
     });
 });

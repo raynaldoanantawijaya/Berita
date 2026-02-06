@@ -1,6 +1,6 @@
 {
     "name": "unified-news-gateway",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "private": true,
     "scripts": {
         "build": "echo 'Building...'"
