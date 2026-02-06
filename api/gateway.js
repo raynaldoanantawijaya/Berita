@@ -226,6 +226,13 @@ app.get('/api/category/:name', verifyCache, async (req, res) => {
             // Try to extract response body if available (e.g. from axios error)
             response_data: r.error_obj?.response?.data || "No response data"
         }));
+
+        // DEBUG: Also show successful but empty responses to debug logic issues
+        responseData.debug_success_dumps = responses.filter(r => r.status === 'fulfilled').map(r => ({
+            source: r.source,
+            data_preview: r.data?.data ? 'Has Data Array' : 'No Data Array',
+            raw_data: r.data // BE CAREFUL: This might be huge, but needed for debug
+        }));
         // DO NOT CACHE ERRORS/EMPTY
     } else {
         cache.set(req.originalUrl, { ...responseData, cached: true });

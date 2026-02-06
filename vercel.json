@@ -14,6 +14,14 @@
             "destination": "/api/rss.js"
         },
         {
+            "source": "/cnn-detail/:path*",
+            "destination": "/api/gateway.js"
+        },
+        {
+            "source": "/detik-detail/:path*",
+            "destination": "/api/gateway.js"
+        },
+        {
             "source": "/api/:path*",
             "destination": "/api/gateway.js"
         },
