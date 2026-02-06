@@ -1,51 +1,43 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "gateway/server.js",
-            "use": "@vercel/node"
+    "functions": {
+        "cnnindonesia-news-api/main.py": {
+            "runtime": "@vercel/python"
         },
-        {
-            "src": "api-berita-indonesia/src/server.js",
-            "use": "@vercel/node"
+        "detiknews_api/main.py": {
+            "runtime": "@vercel/python"
         },
-        {
-            "src": "cnnindonesia-news-api/main.py",
-            "use": "@vercel/python"
+        "gateway/server.js": {
+            "runtime": "@vercel/node"
         },
-        {
-            "src": "detiknews_api/main.py",
-            "use": "@vercel/python"
-        },
-        {
-            "src": "berita-indo-api/package.json",
-            "use": "@vercel/next"
+        "api-berita-indonesia/src/server.js": {
+            "runtime": "@vercel/node"
         }
-    ],
-    "routes": [
+    },
+    "rewrites": [
         {
-            "src": "/cnn-api/(.*)",
-            "dest": "/cnnindonesia-news-api/main.py"
+            "source": "/cnn-api/:path*",
+            "destination": "/cnnindonesia-news-api/main.py"
         },
         {
-            "src": "/detik/(.*)",
-            "dest": "/detiknews_api/main.py"
+            "source": "/detik/:path*",
+            "destination": "/detiknews_api/main.py"
         },
         {
-            "src": "/rss/(.*)",
-            "dest": "/api-berita-indonesia/src/server.js"
+            "source": "/rss/:path*",
+            "destination": "/api-berita-indonesia/src/server.js"
         },
         {
-            "src": "/berita-indo/(.*)",
-            "dest": "/berita-indo-api/$1"
+            "source": "/berita-indo/:path*",
+            "destination": "/berita-indo-api/package.json"
         },
         {
-            "src": "/api/(.*)",
-            "dest": "/gateway/server.js"
+            "source": "/api/:path*",
+            "destination": "/gateway/server.js"
         },
         {
-            "src": "/",
-            "dest": "/gateway/server.js"
+            "source": "/",
+            "destination": "/public/index.html"
         }
     ]
 }
