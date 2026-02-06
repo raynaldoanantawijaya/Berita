@@ -22,30 +22,30 @@
             "use": "@vercel/next"
         }
     ],
-    "rewrites": [
+    "routes": [
         {
-            "source": "/cnn-api/:match*",
-            "destination": "/cnnindonesia-news-api/main.py"
+            "src": "/cnn-api/(.*)",
+            "dest": "/cnnindonesia-news-api/main.py"
         },
         {
-            "source": "/detik/:match*",
-            "destination": "/detiknews_api/main.py"
+            "src": "/detik/(.*)",
+            "dest": "/detiknews_api/main.py"
         },
         {
-            "source": "/rss/:match*",
-            "destination": "/api-berita-indonesia/src/server.js"
+            "src": "/rss/(.*)",
+            "dest": "/api-berita-indonesia/src/server.js"
         },
         {
-            "source": "/berita-indo/:match*",
-            "destination": "/berita-indo-api/$1"
+            "src": "/berita-indo/(.*)",
+            "dest": "/berita-indo-api/$1"
         },
         {
-            "source": "/api/:match*",
-            "destination": "/gateway/server.js"
+            "src": "/api/(.*)",
+            "dest": "/gateway/server.js"
         },
         {
-            "source": "/",
-            "destination": "/gateway/server.js"
+            "src": "/",
+            "dest": "/gateway/server.js"
         }
     ]
 }

@@ -1,0 +1,12 @@
+{
+    "name": "unified-news-gateway",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "build": "echo 'No build command for root'"
+    },
+    "dependencies": {
+        "@vercel/node": "^3.0.0",
+        "@vercel/python": "^4.0.0"
+    }
+}
