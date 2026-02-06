@@ -1,0 +1,25 @@
+{
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/cnn-api/:path*",
+            "destination": "/cnnindonesia-news-api/main.py"
+        },
+        {
+            "source": "/detik/:path*",
+            "destination": "/detiknews_api/main.py"
+        },
+        {
+            "source": "/rss/:path*",
+            "destination": "/api-berita-indonesia/src/server.js"
+        },
+        {
+            "source": "/berita-indo/:path*",
+            "destination": "/berita-indo-api/package.json"
+        },
+        {
+            "source": "/api/:path*",
+            "destination": "/gateway/server.js"
+        }
+    ]
+}
