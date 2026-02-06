@@ -218,9 +218,10 @@ app.get('/api/category/:name', verifyCache, async (req, res) => {
             error: r.error,
             url: r.url
         }));
+        // DO NOT CACHE ERRORS/EMPTY
+    } else {
+        cache.set(req.originalUrl, { ...responseData, cached: true });
     }
-
-    cache.set(req.originalUrl, { ...responseData, cached: true });
 
     res.json(responseData);
 });
