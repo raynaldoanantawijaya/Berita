@@ -1,99 +1,120 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import sys
 import os
+import traceback
+
+# INITIALIZATION WRAPPER
+# Wraps everything in a try-catch to ensure the function ALWAYS starts,
+# returning the error as JSON instead of crashing.
+
+app = Flask(__name__)
+CORS(app)
+
+INIT_ERROR = None
+DN_API = None
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
 try:
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(os.path.join(current_dir, 'detik_src'))
+    # 1. Setup Path to include 'detik_src'
+    src_path = os.path.join(base_dir, 'detik_src')
+    if src_path not in sys.path:
+        sys.path.append(src_path)
 
-    from flask import Flask, request, jsonify
-    from flask_cors import CORS
-    from detik_src import DetikScraper # Assuming __init__.py allows this or direct file import
+    # 2. Try Import
+    # Assuming 'detik_src' package has 'scraper.py' inside or __init__ exposes DetikScraper
+    # Based on previous checks, it likely has scraper.py
+    try:
+        from detik_src.scraper import DetikScraper
+    except ImportError:
+         try:
+             # Fallback: maybe it's directly in detik_src namespace
+             from detik_src import DetikScraper
+         except ImportError:
+             # Fallback: flat file import
+             from scraper import DetikScraper
 
-    # Initialize App
-    app = Flask(__name__)
-    CORS(app)
+    # 3. Instantiate
     DN_API = DetikScraper()
 
-    # --- Vercel Middleware: Strip Prefix ---
-    class PrefixMiddleware(object):
-        def __init__(self, app, prefix=''):
-            self.app = app
-            self.prefix = prefix
-        def __call__(self, environ, start_response):
-            if environ['PATH_INFO'].startswith(self.prefix):
-                environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
-                environ['SCRIPT_NAME'] = self.prefix
-                return self.app(environ, start_response)
-            else:
-                return self.app(environ, start_response)
+except Exception as e:
+    # Capture ANY startup error
+    INIT_ERROR = {
+        "status": "Startup Failed",
+        "error_type": type(e).__name__,
+        "message": str(e),
+        "traceback": traceback.format_exc(),
+        "debug_info": {
+            "cwd": os.getcwd(),
+            "base_dir": base_dir,
+            "src_path": src_path,
+            "src_exists": os.path.exists(src_path),
+            "src_files": os.listdir(src_path) if os.path.exists(src_path) else [],
+            "sys_path": sys.path
+        }
+    }
 
-    app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/detik')
-    # ---------------------------------------
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def detail_handler(path):
+    # 1. Return Startup Error if exists
+    if INIT_ERROR:
+        return jsonify(INIT_ERROR), 500
 
-    # Direct Detail Route (Bypassing Gateway)
-    # Rewrite: /detik-detail/path/to/news -> /api/detik.py -> /detail/path/to/news
-    # We need to reconstruct the full URL from the slug
-    @app.route("/detail/<path:slug>", methods=["GET"])
-    def detail_direct(slug):
-        # Detik slug is usually part of the URL.
-        # e.g. /jabar/d-71234/judul-berita
-        # Full URL: https://news.detik.com/jabar/d-71234/judul-berita
-        # BUT Detik has many subdomains (finance, inet, etc). 
-        # The slug passed by client might be: "jabar/d-71234/judul"
-        # The gateway search results usually have `link`.
-        # If client passes the FULL URL in slug (url encoded?), we can use it.
-        # But Vercel rewrites usually match path.
-        # Re-reading gateway logic: req.url = `/detail${req.url}`. 
-        # So client calls /cnn-detail/teknologi/... -> cnn.py receives /detail/teknologi...
+    try:
+        # 2. Extract Slug from Query Param (Vercel rewrite) or Path
+        # Vercel rewrite: /detik-detail/slug -> /api/detik?slug=slug
+        slug = request.args.get('slug')
         
-        # For Detik, we need the full URL to scrape.
-        # Let's try to deduce it or assume the input is sufficient?
-        # DetikScraper.get_article_content(url) needs a full URL?
-        # Let's check `code.py` in detik_src if possible, but let's just Try.
-        
-        # HACK: If slug doesn't start with http, assume it's a path on news.detik.com?
-        # Or better, accept 'url' param if possible?
-        # But this is a Rewrite rule /detik-detail/:path*
-        
-        # Ideally client sends: /detik-detail/https://news.detik.com/...
-        # Then slug is "https://news.detik.com/..."
-        # If slug starts with 'https:/', fix it (flask might merge slashes)
-        
+        if not slug:
+            # Fallback for direct calls: try parsing path
+            # If path is "/detail/..." or just "slug..."
+            slug = path
+            if slug.startswith('search'): # Handle search collision if any
+                 query = request.args.get("q")
+                 return jsonify(DN_API.search(query)) if query else jsonify([])
+
+        if not slug:
+             # Check if it is a search request hitting the wrong handler?
+             if request.args.get("q"):
+                  return jsonify(DN_API.search(request.args.get("q")))
+                  
+             return jsonify({
+                 "error": "Missing Slug",
+                 "debug": {
+                     "path": path, 
+                     "args": request.args,
+                     "url": request.url
+                 }
+             }), 400
+
+        # 3. Call Scraper (Detail)
+        # Detik slug is usually a full URL part, e.g. "jabar/d-71234/judul"
+        # We need to construct full URL.
+        # Check if slug already has domain
         target_url = slug
         if not target_url.startswith('http'):
-             # Try to fix "https:/www..." issues common in path params
-             if target_url.startswith('https:/'):
-                 target_url = target_url.replace('https:/', 'https://', 1)
-             else:
-                 # Default to generic detik id?
-                 pass 
+            # Basic reconstruction, might need adjustment for subdomains
+            # But usually the scraper might handle relative paths OR we rely on Gateway sending full URL in slug?
+            # Let's assume slug is the path part.
+            target_url = f"https://news.detik.com/{slug}"
+            # WARNING: Detik has many subdomains (finance, inet). 
+            # If slug contains "finance/...", headers might redirect or 404 on news.detik.com
+            # IMPROVEMENT: If slug starts with 'http', use it.
         
+        # Handling the "https:/" issue from Vercel path splitting
+        if target_url.startswith('https:/') and not target_url.startswith('https://'):
+            target_url = target_url.replace('https:/', 'https://', 1)
+
         return jsonify(DN_API.get_article_content(target_url))
 
-    @app.route("/search", methods=["GET"])
-    def search():
-        query = request.args.get("q")
-        if not query:
-            return jsonify({"status": 400, "message": "Query parameter 'q' is required"}), 400
-        return jsonify(DN_API.search(query))
-
-    @app.route("/detail", methods=["GET"])
-    def detail():
-        url = request.args.get("url")
-        if not url:
-            return jsonify({"status": 400, "message": "Query parameter 'url' is required"}), 400
-        return jsonify(DN_API.get_article_content(url))
-
-except Exception as e:
-    from flask import Flask, jsonify
-    import traceback
-    app = Flask(__name__)
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path:path>')
-    def catch_all(path):
+    except Exception as e:
         return jsonify({
-            "error_type": "Startup Error",
+            "error": "Runtime Error during Scraping",
             "message": str(e),
-            "traceback": traceback.format_exc(),
-            "cwd": os.getcwd()
+            "traceback": traceback.format_exc()
         }), 500
+
+# Explicit Search Route (if Vercel routes specific /api/detik/search)
+# But our current vercel.json rewrites /detik-detail to this file. 
+# Search likely goes to /api/gateway -> /api/search?
