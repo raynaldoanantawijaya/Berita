@@ -109,7 +109,7 @@ def detail_handler(path):
         if target_url.startswith('https:/') and not target_url.startswith('https://'):
             target_url = target_url.replace('https:/', 'https://', 1)
 
-        return jsonify(DN_API.get_article_content(target_url))
+        return jsonify(DN_API.get_article(target_url))
 
     except Exception as e:
         return jsonify({
