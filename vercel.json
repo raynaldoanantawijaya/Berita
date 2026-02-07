@@ -15,11 +15,11 @@
         },
         {
             "source": "/cnn-detail/:path*",
-            "destination": "/api/detail"
+            "destination": "/api/detail?slug=:path*"
         },
         {
             "source": "/detik-detail/:path*",
-            "destination": "/api/detik"
+            "destination": "/api/detik?slug=:path*"
         },
         {
             "source": "/echo",

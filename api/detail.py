@@ -29,12 +29,14 @@ try:
         # Usually standard Vercel python behavior: request.path matches the rewrite source if not stripped?
         # Let's handle it dynamically.
         
-        # Target: Recieve "teknologi/..." and pass to detail()
+        # Target: Recieve slug from Query Param (preferred) or Path
+        clean_path = request.args.get('slug')
         
-        # If path starts with cnn-detail, strip it
-        clean_path = path
-        if clean_path.startswith('cnn-detail/'):
-            clean_path = clean_path.replace('cnn-detail/', '', 1)
+        # Fallback to path if query param missing
+        if not clean_path:
+            clean_path = path
+            if clean_path.startswith('cnn-detail/'):
+                clean_path = clean_path.replace('cnn-detail/', '', 1)
         
         # Reconstruct full URL
         target_url = f"https://www.cnnindonesia.com/{clean_path}"

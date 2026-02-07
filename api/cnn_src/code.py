@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 from requests import get
-from requests import get
 # FIXED: Relative import for Vercel structure
 try:
     from . import stealth
