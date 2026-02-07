@@ -71,7 +71,9 @@ class DetikScraper:
                  # Fallback generic
                  img_elm = soup.find('img')
             
-            image = img_elm['src'] if img_elm else ""
+            image = ""
+            if img_elm:
+                image = img_elm.get('src') or img_elm.get('data-src') or ""
             
             # Body
             # Try multiple common Detik body classes
