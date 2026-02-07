@@ -15,7 +15,7 @@
         },
         {
             "source": "/cnn-detail/:path*",
-            "destination": "/api/cnn.py"
+            "destination": "/api/detail.py"
         },
         {
             "source": "/detik-detail/:path*",
