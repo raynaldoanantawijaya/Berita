@@ -109,7 +109,25 @@ def detail_handler(path):
         if target_url.startswith('https:/') and not target_url.startswith('https://'):
             target_url = target_url.replace('https:/', 'https://', 1)
 
-        return jsonify(DN_API.get_article(target_url))
+        result = DN_API.get_article(target_url)
+        
+        # SMART FALLBACK: If title is empty (content not found), try swapping domain
+        # Common issue: news.detik.com vs www.detik.com for regional/subdomain news
+        if not result.get('judul'):
+             if 'news.detik.com' in target_url:
+                 alt_url = target_url.replace('news.detik.com', 'www.detik.com')
+                 # Also try removing 'berita' if it exists in path? No, keep it simple first.
+                 result = DN_API.get_article(alt_url)
+                 if result.get('judul'):
+                     result['link'] = alt_url # Update link to valid one
+             elif 'www.detik.com' in target_url:
+                 alt_url = target_url.replace('www.detik.com', 'news.detik.com')
+                 result_alt = DN_API.get_article(alt_url)
+                 if result_alt.get('judul'):
+                     result = result_alt
+                     result['link'] = alt_url
+
+        return jsonify(result)
 
     except Exception as e:
         return jsonify({
