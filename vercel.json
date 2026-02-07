@@ -22,7 +22,19 @@
             "destination": "/api/detik.py"
         },
         {
-            "source": "/api/:path*",
+            "source": "/api/search",
+            "destination": "/api/gateway.js"
+        },
+        {
+            "source": "/api/category/:name",
+            "destination": "/api/gateway.js"
+        },
+        {
+            "source": "/api/status-check",
+            "destination": "/api/gateway.js"
+        },
+        {
+            "source": "/berita-indo/:path*",
             "destination": "/api/gateway.js"
         },
         {

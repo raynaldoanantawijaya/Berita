@@ -45,47 +45,44 @@ try:
     # ---------------------------------------
 
     # Import Controller logic from src
-    from cnn_src import cnn as cnn_controller
+    # Import Controller logic from src
+    # FIXED: Import from 'code' module, not 'cnn'
+    from cnn_src.code import CNN
+
+    # Instantiate the class
+    cnn_controller = CNN()
 
     @app.route('/')
     def home():
-        return cnn_controller.index()
+        return jsonify(cnn_controller.index())
 
-    @app.route('/<path:path>', methods=['GET'])
-    def proxy(path):
-        # Allow dynamic calling of methods in cnn_controller if they match
-        # But for robustness, let's map explicit routes as per original main.py?
-        #Original main.py was a bit dynamic. Let's make it simpler.
-        
-        # If path is 'teknologi', call cnn.news('teknologi')?
-        # Let's look at original main.py logic.
-        pass
-        
-    # Re-implementing routes manually based on cnn_src structure
+    # Re-implementing routes manually mapping to specific methods in code.py
     @app.route('/nasional')
-    def nasional(): return cnn_controller.news('nasional')
+    def nasional(): return jsonify(cnn_controller.berita_nasional())
     @app.route('/internasional')
-    def internasional(): return cnn_controller.news('internasional')
+    def internasional(): return jsonify(cnn_controller.berita_internasional())
     @app.route('/ekonomi')
-    def ekonomi(): return cnn_controller.news('ekonomi')
+    def ekonomi(): return jsonify(cnn_controller.berita_ekonomi())
     @app.route('/olahraga')
-    def olahraga(): return cnn_controller.news('olahraga')
+    def olahraga(): return jsonify(cnn_controller.berita_olahraga())
     @app.route('/teknologi')
-    def teknologi(): return cnn_controller.news('teknologi')
+    def teknologi(): return jsonify(cnn_controller.berita_teknologi())
     @app.route('/hiburan')
-    def hiburan(): return cnn_controller.news('hiburan')
+    def hiburan(): return jsonify(cnn_controller.berita_hiburan())
     @app.route('/gaya-hidup')
-    def gaya_hidup(): return cnn_controller.news('gaya-hidup')
+    def gaya_hidup(): return jsonify(cnn_controller.berita_social()) # code.py uses berita_social for gaya-hidup URL
     
     @app.route('/search/')
     def search():
         q = request.args.get('q')
-        return cnn_controller.search(q)
+        return jsonify(cnn_controller.search(q))
 
     @app.route('/detail/<path:slug>')
     def detail(slug):
         # slug might include date/segments
-        return cnn_controller.detail(f"https://www.cnnindonesia.com/{slug}")
+        # code.py detail() expects a full URL
+        target_url = f"https://www.cnnindonesia.com/{slug}"
+        return jsonify(cnn_controller.detail(target_url))
 
     @app.route('/debug')
     def debug_view():
