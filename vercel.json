@@ -15,11 +15,15 @@
         },
         {
             "source": "/cnn-detail/:path*",
-            "destination": "/api/detail.py"
+            "destination": "/api/detail"
         },
         {
             "source": "/detik-detail/:path*",
-            "destination": "/api/detik.py"
+            "destination": "/api/detik"
+        },
+        {
+            "source": "/echo",
+            "destination": "/api/echo"
         },
         {
             "source": "/api/search",
