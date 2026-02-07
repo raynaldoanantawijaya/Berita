@@ -1,21 +1,22 @@
-# IMPORTS MOVED INSIDE TRY BLOCK TO CATCH ERRORS
+from flask import Flask, request, jsonify
 import sys
 import os
 import traceback
 
-app = None
+# INITIALIZATION WRAPPER
+app = Flask(__name__)
+
+# Try to setup CORS and Scraper
 INIT_ERROR = None
 DN_API = None
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
 try:
-    from flask import Flask, request, jsonify
     from flask_cors import CORS
-
-    app = Flask(__name__)
     CORS(app)
-DN_API = None
-base_dir = os.path.dirname(os.path.abspath(__file__))
+except ImportError:
+    # If CORS fails, we log it but continue (api works without cors for direct hits)
+    pass
 
 try:
     # 1. Setup Path to include 'detik_src'
