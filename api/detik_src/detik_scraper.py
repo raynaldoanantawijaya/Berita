@@ -62,7 +62,11 @@ class DetikScraper:
             soup = BeautifulSoup(response.text, 'html.parser')
             
             # Title
-            title_elm = soup.find('h1')
+            # Title: Try multiple selectors
+            title_elm = soup.find('h1') or \
+                        soup.find('h1', class_='detail__title') or \
+                        soup.find('div', class_='detail__header').find('h1') if soup.find('div', class_='detail__header') else None
+            
             title = title_elm.get_text(strip=True) if title_elm else ""
             
             # Image
@@ -77,9 +81,12 @@ class DetikScraper:
             
             # Body
             # Try multiple common Detik body classes
+            # Body: Try multiple common Detik body classes
             body_elm = soup.find('div', class_='detail__body-text') or \
                        soup.find('div', class_='itp_bodycontent') or \
-                       soup.find('div', class_='read__content')
+                       soup.find('div', class_='read__content') or \
+                       soup.find('div', class_='detail__body') or \
+                       soup.find('article')
                        
             if body_elm:
                 # Remove unwanted elements (ads, read also, etc)
