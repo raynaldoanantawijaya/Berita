@@ -1,17 +1,19 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+# IMPORTS MOVED INSIDE TRY BLOCK TO CATCH ERRORS
 import sys
 import os
 import traceback
 
-# INITIALIZATION WRAPPER
-# Wraps everything in a try-catch to ensure the function ALWAYS starts,
-# returning the error as JSON instead of crashing.
-
-app = Flask(__name__)
-CORS(app)
-
+app = None
 INIT_ERROR = None
+DN_API = None
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
+try:
+    from flask import Flask, request, jsonify
+    from flask_cors import CORS
+
+    app = Flask(__name__)
+    CORS(app)
 DN_API = None
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
