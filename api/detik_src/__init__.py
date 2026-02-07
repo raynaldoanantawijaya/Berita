@@ -1,1 +1,1 @@
-from .scraper import DetikScraper
+from .detik_scraper import DetikScraper

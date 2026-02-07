@@ -25,14 +25,14 @@ try:
     # Assuming 'detik_src' package has 'scraper.py' inside or __init__ exposes DetikScraper
     # Based on previous checks, it likely has scraper.py
     try:
-        from detik_src.scraper import DetikScraper
+        from detik_src.detik_scraper import DetikScraper
     except ImportError:
          try:
              # Fallback: maybe it's directly in detik_src namespace
              from detik_src import DetikScraper
          except ImportError:
              # Fallback: flat file import
-             from scraper import DetikScraper
+             from detik_scraper import DetikScraper
 
     # 3. Instantiate
     DN_API = DetikScraper()
