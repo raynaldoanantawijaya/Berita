@@ -1,6 +1,11 @@
 from bs4 import BeautifulSoup
 from requests import get
-from src import stealth
+from requests import get
+# FIXED: Relative import for Vercel structure
+try:
+    from . import stealth
+except ImportError:
+    import stealth
 
 base_url = 'https://www.cnnindonesia.com'
 
