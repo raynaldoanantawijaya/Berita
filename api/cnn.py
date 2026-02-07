@@ -46,8 +46,8 @@ try:
 
     # Import Controller logic from src
     # Import Controller logic from src
-    # FIXED: Import from 'code' module, not 'cnn'
-    from cnn_src.code import CNN
+    # FIXED: Import from 'cnn_scraper' module (renamed from code.py to avoid stdlib collision)
+    from cnn_src.cnn_scraper import CNN
 
     # Instantiate the class
     cnn_controller = CNN()

@@ -11,10 +11,10 @@ sys.path.append(os.path.join(current_dir, 'cnn_src'))
 try:
     # Try importing from cnn_src package style if possible, or direct module if path appended
     try:
-        from cnn_src.code import CNN
+        from cnn_src.cnn_scraper import CNN
     except ImportError:
         # Fallback if sys.path allows direct import
-        from code import CNN
+        from cnn_scraper import CNN
 
     app = Flask(__name__)
     cnn_controller = CNN()
