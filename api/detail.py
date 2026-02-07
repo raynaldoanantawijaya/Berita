@@ -78,7 +78,10 @@ def detail_handler(path):
         # 3. Call Scraper
         # Reconstruct full URL if needed, depending on what user passed
         # The slug from gateway usually includes the full path: "teknologi/..."
-        target_url = f"https://www.cnnindonesia.com/{slug}"
+        # 3. Call Scraper
+        target_url = slug
+        if not target_url.startswith('http'):
+             target_url = f"https://www.cnnindonesia.com/{slug}"
         
         result = cnn_controller.detail(target_url)
         return jsonify(result)
